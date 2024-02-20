@@ -1,0 +1,45 @@
+---
+- name: update apt cache
+#  become: yes
+#  become_user: root
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: install tools
+#  become: yes
+#  become_user: root
+  apt:
+    name:
+      - fzf
+      - silversearcher-ag
+      - python3-pip
+      - virtualenv
+      - cmake
+      - clang
+      - g++
+    state: present
+
+- name: upgrade pip to latest version
+  pip:
+    name: pip
+    state: latest
+
+- name: setup fzf hooks for bash
+  lineinfile:
+    path: "${HOME}/.bashrc"
+    create: true
+    insertafter: true
+    regexp: "source {{ fzf_bash_binding_file }}"
+    line: "source {{ fzf_bash_binding_file }}"
+
+- name: install useful python modules
+  pip:
+    name:
+      - requests
+      - ansible
+      - molecule
+      - molecule-docker
+      - pandas
+    virtualenv: "{{ python_virtualenv }}"
+    state: latest

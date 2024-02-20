@@ -1,0 +1,59 @@
+---
+- name: update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: install build dependencies
+  apt:
+    state: present
+    name:
+      - git
+      - ninja-build
+      - gettext
+      - libtool
+      - libtool-bin
+      - autoconf
+      - automake
+      - cmake
+      - g++
+      - pkg-config
+      - unzip
+      - curl
+      - doxygen
+      - python3-pip
+
+- name: upgrade pip to latest version
+  pip:
+    name: pip
+    state: latest
+
+- name: check if neovim already installed
+  shell: "command -v nvim"
+  register: nvim_exists
+
+- name: install and setup neovim
+  block:
+    - name: clone repo
+      git:
+        repo: "https://github.com/neovim/neovim"
+        dest: "{{ neovim_checkout_dir }}"
+        version: "{{ neovim_version }}"
+
+    - name: build 
+      shell: 
+        cmd: "make CMAKE_BUILD_TYPE=Release && make install"
+        chdir: "{{ neovim_checkout_dir }}"
+
+    - name: create config directory
+      file:
+        name: "${HOME}/.config/nvim"
+        state: directory
+        mode: "755"
+
+    - name: install kickstart file
+      get_url:
+        url: "https://raw.githubusercontent.com/nvim-lua/kickstart.nvim/master/init.lua"
+        dest: "${HOME}/.config/nvim/init.lua"
+        mode: "744"
+  when: "nvim_exists.rc != 0"
